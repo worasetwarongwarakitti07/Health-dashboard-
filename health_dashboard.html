@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Tracking Dashboard - รายงานสุขภาพประจำสัปดาห์</title>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --primary: #0284c7;
+            --primary-light: #e0f2fe;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --indigo: #6366f1;
+            --indigo-light: #e0e7ff;
+            --amber: #f59e0b;
+            --amber-light: #fef3c7;
+            --radius: 14px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sarabun", "Prompt", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 32px 20px;
+        }
+
+        .container {
+            max-width: 1060px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #ffffff;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .user-pill span {
+            font-weight: 600;
+            color: #0369a1;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .kpi-card.workout::before { background: var(--success); }
+        .kpi-card.time::before { background: var(--indigo); }
+        .kpi-card.sleep::before { background: #8b5cf6; }
+        .kpi-card.water::before { background: var(--primary); }
+
+        .kpi-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value-box {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .kpi-value {
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -1px;
+        }
+
+        .kpi-unit {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .kpi-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            margin-top: 4px;
+        }
+
+        .badge-success { background: var(--success-light); color: #065f46; }
+        .badge-indigo { background: var(--indigo-light); color: #3730a3; }
+        .badge-purple { background: #ede9fe; color: #5b21b6; }
+        .badge-blue { background: var(--primary-light); color: #075985; }
+
+        /* Charts Layout */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 640px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .chart-legend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* SVG Chart Wrapper */
+        .svg-container {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Activity Table */
+        .table-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            margin-bottom: 28px;
+            overflow-x: auto;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: #334155;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-run { background: #fef2f2; color: #991b1b; }
+        .tag-bike { background: #eff6ff; color: #1e40af; }
+        .tag-rest { background: #f1f5f9; color: #64748b; }
+
+        /* Assessment Card */
+        .assessment-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+            border: 1px solid #bbf7d0;
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .assessment-card h3 {
+            color: #166534;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .assessment-card ul {
+            padding-left: 20px;
+            color: #1e293b;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Section -->
+    <header class="header">
+        <div>
+            <h1>แดชบอร์ดสุขภาพส่วนตัว (Personal Health Tracker)</h1>
+            <p>บันทึกและประเมินผลสุขภาพย้อนหลัง 7 วัน (7 – 13 กันยายน)</p>
+        </div>
+        <div class="user-pill">
+            <div>น้ำหนักตัว: <span>53 กก.</span></div>
+            <div>•</div>
+            <div>เป้าหมายออกกำลังกาย: <span>5 วัน/สัปดาห์</span></div>
+        </div>
+    </header>
+
+    <!-- 4 KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card workout">
+            <div class="kpi-title">วันออกกำลังกาย</div>
+            <div class="kpi-value-box">
+                <span class="kpi-value">6</span>
+                <span class="kpi-unit">/ 5 วัน</span>
+            </div>
+            <div class="kpi-badge badge-success">✓ บรรลุเป้าหมาย (120%)</div>
+        </div>
+
+        <div class="kpi-card time">
+            <div class="kpi-title">เวลารวมออกกำลังกาย</div>
+            <div class="kpi-value-box">
+                <span class="kpi-value">200</span>
+                <span class="kpi-unit">นาที</span>
+            </div>
+            <div class="kpi-badge badge-indigo">✓ เกินเกณฑ์ WHO (150 น.)</div>
+        </div>
+
+        <div class="kpi-card sleep">
+            <div class="kpi-title">ชั่วโมงนอนเฉลี่ย</div>
+            <div class="kpi-value-box">
+                <span class="kpi-value">7.10</span>
+                <span class="kpi-unit">ชม./คืน</span>
+            </div>
+            <div class="kpi-badge badge-purple">✓ เกณฑ์ปกติ (7–9 ชม.)</div>
+        </div>
+
+        <div class="kpi-card water">
+            <div class="kpi-title">ปริมาณน้ำดื่มเฉลี่ย</div>
+            <div class="kpi-value-box">
+                <span class="kpi-value">1.79</span>
+                <span class="kpi-unit">ลิตร/วัน</span>
+            </div>
+            <div class="kpi-badge badge-blue">✓ เกณฑ์มาตรฐาน 53 กก.</div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-container">
+        <!-- Chart 1: Sleep Trend -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title">แนวโน้มชั่วโมงนอน (Sleep Duration)</div>
+                <div class="chart-legend">
+                    <span class="legend-dot" style="background:#8b5cf6;"></span> นอนจริง
+                    <span class="legend-dot" style="background:#ef4444; margin-left:8px;"></span> เกณฑ์ขั้นต่ำ (7 ชม.)
+                </div>
+            </div>
+            <div class="svg-container">
+                <svg viewBox="0 0 460 220" style="width: 100%; height: auto;">
+                    <!-- Grid lines -->
+                    <line x1="40" y1="30" x2="430" y2="30" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="40" y1="75" x2="430" y2="75" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="40" y1="120" x2="430" y2="120" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="40" y1="165" x2="430" y2="165" stroke="#f1f5f9" stroke-width="1" />
+
+                    <!-- Y-Axis Labels (Scale: 6.0 to 9.0 hrs) -->
+                    <!-- Y formula: 165 - (val - 6.0) * 45 -->
+                    <text x="32" y="169" font-size="11" fill="#94a3b8" text-anchor="end">6.0</text>
+                    <text x="32" y="124" font-size="11" fill="#94a3b8" text-anchor="end">7.0</text>
+                    <text x="32" y="79" font-size="11" fill="#94a3b8" text-anchor="end">8.0</text>
+                    <text x="32" y="34" font-size="11" fill="#94a3b8" text-anchor="end">9.0</text>
+
+                    <!-- Benchmark Line at 7.0 hrs (Y = 120) -->
+                    <line x1="40" y1="120" x2="430" y2="120" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4" />
+
+                    <!-- Area under curve -->
+                    <!-- Points: (65, 111), (120, 142.5), (175, 142.5), (230, 120), (285, 97.5), (340, 75), (395, 120) -->
+                    <polygon points="65,111 120,142.5 175,142.5 230,120 285,97.5 340,75 395,120 395,175 65,175" fill="#ede9fe" opacity="0.45" />
+
+                    <!-- Sleep Trend Polyline -->
+                    <polyline fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                        points="65,111 120,142.5 175,142.5 230,120 285,97.5 340,75 395,120" />
+
+                    <!-- Data Points & Labels -->
+                    <!-- Mon: 7.2h -> y=111 -->
+                    <circle cx="65" cy="111" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="65" y="99" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">7.2</text>
+                    <text x="65" y="195" font-size="11" fill="#64748b" text-anchor="middle">จ.</text>
+
+                    <!-- Tue: 6.5h -> y=142.5 -->
+                    <circle cx="120" cy="142.5" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="120" y="132" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">6.5</text>
+                    <text x="120" y="195" font-size="11" fill="#64748b" text-anchor="middle">อ.</text>
+
+                    <!-- Wed: 6.5h -> y=142.5 -->
+                    <circle cx="175" cy="142.5" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="175" y="132" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">6.5</text>
+                    <text x="175" y="195" font-size="11" fill="#64748b" text-anchor="middle">พ.</text>
+
+                    <!-- Thu: 7.0h -> y=120 -->
+                    <circle cx="230" cy="120" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="230" y="109" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">7.0</text>
+                    <text x="230" y="195" font-size="11" fill="#64748b" text-anchor="middle">พฤ.</text>
+
+                    <!-- Fri: 7.5h -> y=97.5 -->
+                    <circle cx="285" cy="97.5" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="285" y="86" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">7.5</text>
+                    <text x="285" y="195" font-size="11" fill="#64748b" text-anchor="middle">ศ.</text>
+
+                    <!-- Sat: 8.0h -> y=75 -->
+                    <circle cx="340" cy="75" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="340" y="64" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">8.0</text>
+                    <text x="340" y="195" font-size="11" fill="#64748b" text-anchor="middle">ส.</text>
+
+                    <!-- Sun: 7.0h -> y=120 -->
+                    <circle cx="395" cy="120" r="4.5" fill="#8b5cf6" stroke="#ffffff" stroke-width="2" />
+                    <text x="395" y="109" font-size="11" font-weight="bold" fill="#6d28d9" text-anchor="middle">7.0</text>
+                    <text x="395" y="195" font-size="11" fill="#64748b" text-anchor="middle">อา.</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Chart 2: Water Trend -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title">แนวโน้มการดื่มน้ำ (Water Intake)</div>
+                <div class="chart-legend">
+                    <span class="legend-dot" style="background:#0284c7;"></span> ปริมาณน้ำ (ลิตร)
+                    <span class="legend-dot" style="background:#10b981; margin-left:8px;"></span> เกณฑ์แนะนำ (~1.8L)
+                </div>
+            </div>
+            <div class="svg-container">
+                <svg viewBox="0 0 460 220" style="width: 100%; height: auto;">
+                    <!-- Grid lines (Scale: 1.0 to 2.5 L) -->
+                    <!-- Y formula: 165 - (val - 1.0) * 110 -->
+                    <line x1="40" y1="33" x2="430" y2="33" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="40" y1="88" x2="430" y2="88" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="40" y1="143" x2="430" y2="143" stroke="#f1f5f9" stroke-width="1" />
+
+                    <!-- Y-Axis Labels -->
+                    <text x="32" y="146" font-size="11" fill="#94a3b8" text-anchor="end">1.2L</text>
+                    <text x="32" y="91" font-size="11" fill="#94a3b8" text-anchor="end">1.7L</text>
+                    <text x="32" y="36" font-size="11" fill="#94a3b8" text-anchor="end">2.2L</text>
+
+                    <!-- Benchmark Target Line at 1.8 L (Y = 165 - (0.8*110) = 77) -->
+                    <line x1="40" y1="77" x2="430" y2="77" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,4" />
+
+                    <!-- Columns / Bars for daily water -->
+                    <!-- Bar width = 26px -->
+                    <!-- Mon: 1.8L -> height = 0.8*110 = 88, y = 165 - 88 = 77 -->
+                    <rect x="52" y="77" width="26" height="88" rx="4" fill="#38bdf8" opacity="0.85" />
+                    <text x="65" y="70" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">1.8</text>
+                    <text x="65" y="195" font-size="11" fill="#64748b" text-anchor="middle">จ.</text>
+
+                    <!-- Tue: 2.0L -> height = 1.0*110 = 110, y = 55 -->
+                    <rect x="107" y="55" width="26" height="110" rx="4" fill="#0284c7" opacity="0.85" />
+                    <text x="120" y="48" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">2.0</text>
+                    <text x="120" y="195" font-size="11" fill="#64748b" text-anchor="middle">อ.</text>
+
+                    <!-- Wed: 2.0L -> height = 110, y = 55 -->
+                    <rect x="162" y="55" width="26" height="110" rx="4" fill="#0284c7" opacity="0.85" />
+                    <text x="175" y="48" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">2.0</text>
+                    <text x="175" y="195" font-size="11" fill="#64748b" text-anchor="middle">พ.</text>
+
+                    <!-- Thu: 1.5L -> height = 0.5*110 = 55, y = 110 -->
+                    <rect x="217" y="110" width="26" height="55" rx="4" fill="#94a3b8" opacity="0.7" />
+                    <text x="230" y="103" font-size="11" font-weight="bold" fill="#475569" text-anchor="middle">1.5</text>
+                    <text x="230" y="195" font-size="11" fill="#64748b" text-anchor="middle">พฤ.</text>
+
+                    <!-- Fri: 1.5L -> height = 55, y = 110 -->
+                    <rect x="272" y="110" width="26" height="55" rx="4" fill="#94a3b8" opacity="0.7" />
+                    <text x="285" y="103" font-size="11" font-weight="bold" fill="#475569" text-anchor="middle">1.5</text>
+                    <text x="285" y="195" font-size="11" fill="#64748b" text-anchor="middle">ศ.</text>
+
+                    <!-- Sat: 2.0L -> height = 110, y = 55 -->
+                    <rect x="327" y="55" width="26" height="110" rx="4" fill="#0284c7" opacity="0.85" />
+                    <text x="340" y="48" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">2.0</text>
+                    <text x="340" y="195" font-size="11" fill="#64748b" text-anchor="middle">ส.</text>
+
+                    <!-- Sun: 1.75L -> height = 0.75*110 = 82.5, y = 82.5 -->
+                    <rect x="382" y="82.5" width="26" height="82.5" rx="4" fill="#38bdf8" opacity="0.85" />
+                    <text x="395" y="75" font-size="11" font-weight="bold" fill="#0369a1" text-anchor="middle">1.75</text>
+                    <text x="395" y="195" font-size="11" fill="#64748b" text-anchor="middle">อา.</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Activity Table -->
+    <div class="table-card">
+        <div class="section-title">
+            <span>บันทึกกิจกรรมรายวัน (Daily Log)</span>
+            <span style="font-size: 13px; font-weight: normal; color: var(--text-muted);">ข้อมูลครบถ้วน 7 วัน</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>วันที่</th>
+                    <th>กิจกรรม</th>
+                    <th>ระยะเวลา</th>
+                    <th>การนอนหลับ</th>
+                    <th>การดื่มน้ำ</th>
+                    <th>สถานะวัน</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>7 ก.ย. (จันทร์)</strong></td>
+                    <td><span class="tag-pill tag-run">วิ่ง</span></td>
+                    <td>30 นาที</td>
+                    <td>7.2 ชม.</td>
+                    <td>1.8 ลิตร</td>
+                    <td><span class="kpi-badge badge-success">ผ่านเกณฑ์</span></td>
+                </tr>
+                <tr>
+                    <td><strong>8 ก.ย. (อังคาร)</strong></td>
+                    <td><span class="tag-pill tag-bike">ปั่นจักรยาน</span></td>
+                    <td>45 นาที</td>
+                    <td>6.5 ชม.</td>
+                    <td>2.0 ลิตร</td>
+                    <td><span class="kpi-badge badge-success">ผ่านเกณฑ์</span></td>
+                </tr>
+                <tr>
+                    <td><strong>9 ก.ย. (พุธ)</strong></td>
+                    <td><span class="tag-pill tag-bike">ปั่นจักรยาน</span></td>
+                    <td>45 นาที</td>
+                    <td>6.5 ชม.</td>
+                    <td>2.0 ลิตร</td>
+                    <td><span class="kpi-badge badge-success">ผ่านเกณฑ์</span></td>
+                </tr>
+                <tr>
+                    <td><strong>10 ก.ย. (พฤหัส)</strong></td>
+                    <td><span class="tag-pill tag-rest">พักฟื้น (Rest Day)</span></td>
+                    <td>0 นาที</td>
+                    <td>7.0 ชม.</td>
+                    <td>1.5 ลิตร</td>
+                    <td><span class="kpi-badge badge-indigo">พักผ่อน</span></td>
+                </tr>
+                <tr>
+                    <td><strong>11 ก.ย. (ศุกร์)</strong></td>
+                    <td><span class="tag-pill tag-bike">ปั่นจักรยาน</span></td>
+                    <td>15 นาที</td>
+                    <td>7.5 ชม.</td>
+                    <td>1.5 ลิตร</td>
+                    <td><span class="kpi-badge badge-blue">ผ่านเกณฑ์</span></td>
+                </tr>
+                <tr>
+                    <td><strong>12 ก.ย. (เสาร์)</strong></td>
+                    <td><span class="tag-pill tag-bike">ปั่นจักรยาน</span></td>
+                    <td>30 นาที</td>
+                    <td>8.0 ชม.</td>
+                    <td>2.0 ลิตร</td>
+                    <td><span class="kpi-badge badge-success">ยอดเยี่ยม</span></td>
+                </tr>
+                <tr>
+                    <td><strong>13 ก.ย. (อาทิตย์)</strong></td>
+                    <td><span class="tag-pill tag-bike">ปั่นจักรยาน</span></td>
+                    <td>35 นาที</td>
+                    <td>7.0 ชม.</td>
+                    <td>1.75 ลิตร</td>
+                    <td><span class="kpi-badge badge-success">ผ่านเกณฑ์</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Health Assessment Card -->
+    <div class="assessment-card">
+        <h3>สรุปผลการประเมินสุขภาพโดยผู้ช่วยส่วนตัว</h3>
+        <ul>
+            <li><strong>การออกกำลังกาย:</strong> ทำได้ 6 วัน รวม 200 นาที เกินเป้าหมาย 5 วัน/สัปดาห์ และเกินเกณฑ์ WHO (150 นาที) ยอดเยี่ยมมาก</li>
+            <li><strong>การนอนหลับ:</strong> เฉลี่ย 7.10 ชม./คืน อยู่ในเกณฑ์มาตรฐานสุขภาพ (7–9 ชม.) ร่างกายได้รับการฟื้นฟูเพียงพอ</li>
+            <li><strong>การดื่มน้ำ:</strong> เฉลี่ย 1.79 ลิตร/วัน ผ่านเกณฑ์พื้นฐานน้ำหนัก 53 กก. (1.6–1.9 ลิตร) ควรเพิ่มอีกเล็กน้อยในวันที่ออกกำลังกายหนัก</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>
